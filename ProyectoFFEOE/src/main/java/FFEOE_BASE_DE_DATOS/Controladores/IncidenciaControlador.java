@@ -1,12 +1,12 @@
 package FFEOE_BASE_DE_DATOS.Controladores;
 
 import FFEOE_BASE_DE_DATOS.Entidades.Incidencia;
-import FFEOE_BASE_DE_DATOS.Repositorios.IncidenciaRepository;
-
+import FFEOE_BASE_DE_DATOS.Servicios.IncidenciaServicio;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Optional;
 
 @RestController
@@ -14,27 +14,25 @@ import java.util.Optional;
 public class IncidenciaControlador {
 
     @Autowired
-    private IncidenciaRepository incidenciaRepository;
+    private IncidenciaServicio incidenciaServicio;
 
     @GetMapping
     public List<Incidencia> obtenerTodas() {
-        return incidenciaRepository.findAll();
+        return new ArrayList<>();
     }
 
     @PostMapping
     public Incidencia crearIncidencia(@RequestBody Incidencia nuevaIncidencia) {
-        nuevaIncidencia.setEstado("Abierta");
-        return incidenciaRepository.save(nuevaIncidencia);
+        return incidenciaServicio.guardarIncidencia(nuevaIncidencia);
     }
 
     @PutMapping("/{id}")
     public Incidencia actualizarIncidencia(@PathVariable Long id, @RequestBody Incidencia datosActualizados) {
-        Optional<Incidencia> incidenciaExistente = incidenciaRepository.findById(id);
+        Optional<Incidencia> incidenciaExistente = incidenciaServicio.obtenerPorId(id);
 
         if (incidenciaExistente.isPresent()) {
             Incidencia incidencia = incidenciaExistente.get();
 
-            // Solo actualiza si el dato que viene no es nulo
             if (datosActualizados.getDescripcion() != null) {
                 incidencia.setDescripcion(datosActualizados.getDescripcion());
             }
@@ -42,7 +40,7 @@ public class IncidenciaControlador {
                 incidencia.setEstado(datosActualizados.getEstado());
             }
 
-            return incidenciaRepository.save(incidencia);
+            return incidenciaServicio.guardarIncidencia(incidencia);
         } else {
             return null;
         }
@@ -50,7 +48,11 @@ public class IncidenciaControlador {
 
     @DeleteMapping("/{id}")
     public String eliminarIncidencia(@PathVariable Long id) {
-        incidenciaRepository.deleteById(id);
-        return "Incidencia eliminada correctamente.";
+        boolean eliminado = incidenciaServicio.eliminarIncidencia(id);
+        if (eliminado) {
+            return "Incidencia eliminada correctamente.";
+        } else {
+            return "Error: No se encontró la incidencia.";
+        }
     }
 }
